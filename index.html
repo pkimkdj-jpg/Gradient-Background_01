@@ -1,41 +1,145 @@
-<ShaderGradient
-  animate="on"
-  axesHelper="off"
-  brightness={1.2}
-  cAzimuthAngle={170}
-  cDistance={4.4}
-  cPolarAngle={70}
-  cameraZoom={1}
-  color1="#94ffd1"
-  color2="#6bf5ff"
-  color3="#ffffff"
-  destination="onCanvas"
-  embedMode="off"
-  envPreset="city"
-  format="gif"
-  fov={45}
-  frameRate={10}
-  gizmoHelper="hide"
-  grain="off"
-  lightType="3d"
-  pixelDensity={1}
-  positionX={0}
-  positionY={0.9}
-  positionZ={-0.3}
-  range="disabled"
-  rangeEnd={40}
-  rangeStart={0}
-  reflection={0.1}
-  rotationX={45}
-  rotationY={0}
-  rotationZ={0}
-  shader="defaults"
-  type="waterPlane"
-  uAmplitude={0}
-  uDensity={1.2}
-  uFrequency={0}
-  uSpeed={0.2}
-  uStrength={3.4}
-  uTime={0}
-  wireframe={false}
-/>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shader Gradient Background</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.165.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- Parameters from your shadergradient.co URL ---
+        const config = {
+            color1: '#94ffd1',
+            color2: '#6bf5ff',
+            color3: '#ffffff',
+            uSpeed: 0.2,
+            uStrength: 3.4,
+            uDensity: 1.2,
+            cPolarAngle: 70,
+            cAzimuthAngle: 170,
+            cDistance: 4.4
+        };
+        // ----------------------------------------------------
+
+        let camera, scene, renderer, material;
+        const clock = new THREE.Clock();
+
+        // Vertex Shader - Handles the geometry/position of the plane
+        const vertexShader = `
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+
+        // Fragment Shader - Handles the color and visual effect
+        const fragmentShader = `
+            uniform float uTime;
+            uniform vec3 uColor1;
+            uniform vec3 uColor2;
+            uniform vec3 uColor3;
+            uniform float uStrength;
+            uniform float uDensity;
+            
+            varying vec2 vUv;
+
+            // 2D Noise function to create the watery effect
+            float noise(vec2 p) {
+                return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+            }
+
+            float FBM(vec2 p) {
+                float value = 0.0;
+                float amplitude = 0.5;
+                for (int i = 0; i < 6; i++) {
+                    value += amplitude * noise(p);
+                    p *= 2.0;
+                    amplitude *= 0.5;
+                }
+                return value;
+            }
+
+            void main() {
+                vec2 p = vUv * uDensity;
+                float- t = uTime * 0.1;
+
+                // Create a flowing, distorted time effect for the noise
+                float distortedTime = FBM(p + t);
+                
+                // Mix the base colors
+                vec3 baseColor = mix(uColor1, uColor2, vUv.y + distortedTime * 0.1);
+                vec3 finalColor = mix(baseColor, uColor3, FBM(p - t) * uStrength);
+
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `;
+        
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            const geometry = new THREE.PlaneGeometry(10, 10, 32, 32);
+            
+            material = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0.0 },
+                    uColor1: { value: new THREE.Color(config.color1) },
+                    uColor2: { value: new THREE.Color(config.color2) },
+                    uColor3: { value: new THREE.Color(config.color3) },
+                    uStrength: { value: config.uStrength },
+                    uDensity: { value: config.uDensity }
+                },
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader
+            });
+
+            const mesh = new THREE.Mesh(geometry, material);
+            scene.add(mesh);
+
+            // Set camera position based on your URL parameters
+            const polar = THREE.MathUtils.degToRad(config.cPolarAngle);
+            const azimuth = THREE.MathUtils.degToRad(config.cAzimuthAngle);
+            const r = config.cDistance;
+            camera.position.set(
+                r * Math.sin(polar) * Math.cos(azimuth),
+                r * Math.cos(polar),
+                r * Math.sin(polar) * Math.sin(azimuth)
+            );
+            camera.lookAt(scene.position);
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            material.uniforms.uTime.value += clock.getDelta() * config.uSpeed;
+            renderer.render(scene, camera);
+        }
+
+        init();
+        animate();
+    </script>
+</body>
+</html>
