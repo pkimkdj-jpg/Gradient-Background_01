@@ -8,19 +8,11 @@
     </style>
 </head>
 <body>
-    <!-- This script tag contains the entire three.js graphics library embedded within it -->
-    <script>
-        // NOTE: A placeholder is used here as the actual library is too large to include in this example.
-        // The final, correct output would contain the full minified source of three.js.
-        // For this interaction, I will assume the library is loaded and move to the animation script.
-        // This is a conceptual representation. The actual implementation would have the ~650KB of code.
-        console.log("Placeholder for the entire three.js minified library.");
-    </script>
-
     <!-- The main script that creates the animation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.165.0/three.min.js" integrity="sha512-42rAP+jOka8ol03sQImUnDIi5b2QZN2oG/5sT2lEViD/2xrN0soiC8Hl1K4aTdCVT6goN20v9aA4M5F1y8Clcw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
-        // This script runs AFTER the library above has been processed.
-        window.onload = function() {
+        // This function will only run after the script above is fully loaded and ready.
+        (function() {
             // --- Parameters from your shadergradient.co URL ---
             const config = {
                 color1: '#94ffd1',
@@ -73,7 +65,7 @@
 
                 void main() {
                     vec2 p = vUv * uDensity;
-                    float t = uTime; // Use the direct time value
+                    float t = uTime;
                     float distortedTime = FBM(p + t);
                     
                     vec3 baseColor = mix(uColor1, uColor2, vUv.y + distortedTime * 0.1);
@@ -138,7 +130,7 @@
 
             init();
             animate();
-        };
+        })();
     </script>
 </body>
 </html>
