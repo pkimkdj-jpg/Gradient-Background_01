@@ -15,12 +15,24 @@
 <body>
 <script>
   document.body.addEventListener('click', function () {
-    var frames = window.parent.frames;
-    for (var i = 0; i < frames.length; i++) {
-      try { 
-        frames[i].postMessage({ type: 'gradient:nextColor' }, '*'); 
-      } catch (e) {}
-    }
+    // Post to parent
+    try { window.parent.postMessage({ type: 'gradient:nextColor' }, '*'); } catch(e) {}
+    // Post to all siblings
+    try {
+      var frames = window.parent.frames;
+      for (var i = 0; i < frames.length; i++) {
+        try { frames[i].postMessage({ type: 'gradient:nextColor' }, '*'); } catch(e) {}
+      }
+    } catch(e) {}
+    // Post to grandparent and its frames
+    try { 
+      var grandparent = window.parent.parent;
+      grandparent.postMessage({ type: 'gradient:nextColor' }, '*');
+      var gpFrames = grandparent.frames;
+      for (var j = 0; j < gpFrames.length; j++) {
+        try { gpFrames[j].postMessage({ type: 'gradient:nextColor' }, '*'); } catch(e) {}
+      }
+    } catch(e) {}
   });
 </script>
 </body>
