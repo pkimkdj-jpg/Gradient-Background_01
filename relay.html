@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<script>
+  document.body.addEventListener('click', function () {
+    var frames = window.parent.frames;
+    for (var i = 0; i < frames.length; i++) {
+      try { 
+        frames[i].postMessage({ type: 'gradient:nextColor' }, '*'); 
+      } catch (e) {}
+    }
+  });
+</script>
+</body>
+</html>
